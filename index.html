@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guardados de Rasta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: una columna tipo app — cabecera fija con búsqueda y categorías, grilla de tarjetas, ficha en panel */
+:root{
+  --bg:#f3f4f0; --surface:#ffffff; --ink:#1d2421; --muted:#5f6b66; --line:#dde1db;
+  --accent:#1f6b5c; --accent-ink:#ffffff; --soft:#e4ece8;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --c-casa:#b26a2c; --c-recetas:#b8433a; --c-libros:#4a5fb0; --c-pelis:#7b4aa8;
+  --ok:#2f8a4a; --warn:#b98a00; --bad:#c2402f;
+  --c-lugares:#2f8a55; --c-tatuajes:#2b2b2b; --c-revisar:#8a7a2a; --c-trabajo:#1f6f8b; --c-huerta:#5f7d1f; --c-musica:#b03a7a; --c-entreno:#d0602a;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --surface:#1d2321; --ink:#e8ece9; --muted:#9aa6a1; --line:#2d3532;
+  --accent:#5cc4ab; --accent-ink:#0c1512; --soft:#22302b;
+  --c-casa:#e0a067; --c-recetas:#e88078; --c-libros:#8ea0ec; --c-pelis:#c09ae6;
+  --ok:#5fd18a; --warn:#f2c94c; --bad:#ff7a66;
+  --c-lugares:#6fcf93; --c-tatuajes:#d6d6d6; --c-revisar:#d8c66a; --c-trabajo:#6cc3e0; --c-huerta:#a9c95a; --c-musica:#e88ac0; --c-entreno:#ff9a62; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --surface:#1d2321; --ink:#e8ece9; --muted:#9aa6a1; --line:#2d3532;
+  --accent:#5cc4ab; --accent-ink:#0c1512; --soft:#22302b;
+  --c-casa:#e0a067; --c-recetas:#e88078; --c-libros:#8ea0ec; --c-pelis:#c09ae6;
+  --ok:#5fd18a; --warn:#f2c94c; --bad:#ff7a66;
+  --c-lugares:#6fcf93; --c-tatuajes:#d6d6d6; --c-revisar:#d8c66a; --c-trabajo:#6cc3e0; --c-huerta:#a9c95a; --c-musica:#e88ac0; --c-entreno:#ff9a62; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+header .wrap{padding-block:18px 12px;display:flex;flex-direction:column;gap:12px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,5vw,34px);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.count{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.search{width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+.search:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;cursor:pointer;white-space:nowrap}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chip .n{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip[aria-pressed="true"] .n{color:inherit;opacity:.8}
+.chip.empty{opacity:.55}
+.chip:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main .wrap{padding-block:20px 48px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.card{display:flex;flex-direction:column;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;padding:0;font:inherit;color:inherit;transition:transform .15s}
+.card:hover{transform:translateY(-2px)}
+.cover{aspect-ratio:4/3;width:100%;max-width:100%;object-fit:cover;display:block;background:var(--soft)}
+.ph{aspect-ratio:4/3;display:grid;place-items:center;background:repeating-linear-gradient(135deg,var(--soft) 0 12px,var(--surface) 12px 24px);color:var(--muted);font-size:13px;text-align:center;padding:16px}
+.ph b{display:block;font-family:var(--display);font-size:20px;color:var(--ink)}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cat{display:inline-flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--c);font-weight:700}
+.cat::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.card h2{font-family:var(--display);font-weight:500;font-size:19px;line-height:1.2;margin:0}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--muted)}
+.empty-state{padding:48px 0;text-align:center;color:var(--muted)}
+.empty-state b{display:block;font-family:var(--display);font-size:20px;color:var(--ink);margin-bottom:4px}
+/* ficha */
+dialog{border:none;padding:0;border-radius:16px;background:var(--surface);color:var(--ink);width:min(560px,calc(100% - 32px));max-height:calc(100% - 48px)}
+dialog::backdrop{background:rgba(10,14,12,.55)}
+.sheet{display:flex;flex-direction:column}
+.sheet img{width:100%;max-height:55vh;object-fit:contain;background:var(--soft)}
+.sheet .in{padding:18px 20px 20px;display:flex;flex-direction:column;gap:10px}
+.sheet h3{font-family:var(--display);font-weight:700;font-size:24px;margin:0;text-wrap:balance}
+.sheet p{margin:0}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;margin:0}
+.facts dt{color:var(--muted)} .facts dd{margin:0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.btn{display:inline-flex;align-items:center;padding:10px 16px;border-radius:10px;font:inherit;font-weight:700;text-decoration:none;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.edit{border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.edit summary{cursor:pointer;font-weight:700;color:var(--accent)}
+.edit-form{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.edit-form label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.edit-form select,.edit-form input,.edit-form textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.edit-form select:focus-visible,.edit-form input:focus-visible,.edit-form textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.edit-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px}
+.edit-msg{font-size:13px;color:var(--muted);margin:8px 0 0}
+.edit-row .edit-msg{margin:0}
+/* cumplidos */
+.progress{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.progress .bar{flex:1;height:6px;border-radius:99px;background:var(--line);overflow:hidden;min-width:0}
+.progress .bar span{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .4s ease}
+.progress b{color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);align-self:flex-start}
+.seg button{font:inherit;font-size:13px;padding:6px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--soft);color:var(--ink);font-weight:700}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.cell{position:relative;display:flex;min-width:0}
+.cell .card{flex:1;min-width:0}
+.tick{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:2px solid var(--surface);background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--muted);display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.18);padding:0}
+.tick svg{width:18px;height:18px}
+.tick[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tick:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cell.done .cover,.cell.done .ph{filter:saturate(.35);opacity:.7}
+.done-badge{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;font-size:12px;font-weight:700;color:var(--accent);background:var(--soft);padding:2px 8px;border-radius:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;opacity:0;transition:opacity .2s,transform .2s;z-index:20;max-width:calc(100% - 32px);text-align:center;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.confetti{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:30;animation:pop .8s ease-out forwards}
+.light{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;font-size:12px;font-weight:700;color:var(--ink);background:var(--soft);padding:2px 8px 2px 6px;border-radius:6px;font-variant-numeric:tabular-nums}
+.light i{width:9px;height:9px;border-radius:50%;background:var(--lc);box-shadow:0 0 0 3px color-mix(in srgb,var(--lc) 25%,transparent)}
+.light.ok{--lc:var(--ok)} .light.warn{--lc:var(--warn)} .light.bad{--lc:var(--bad)}
+.mini{height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.mini span{display:block;height:100%;background:var(--accent)}
+.steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
+.steps li{display:flex;flex-direction:column;gap:2px}
+.steps li span{color:var(--muted);font-size:14px}
+.steps a{color:var(--accent);font-weight:700;font-size:14px;align-self:flex-start}
+.ch{display:flex;flex-direction:column;gap:8px;background:var(--soft);border-radius:12px;padding:12px}
+.ch-stats{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;font-variant-numeric:tabular-nums}
+.cal{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.cal button{aspect-ratio:1;max-width:100%;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer;padding:0}
+.cal button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.cal button.today{outline:2px solid var(--accent);outline-offset:1px}
+.cal button:disabled{opacity:.4;cursor:default}
+.ch-hint{font-size:12px;color:var(--muted);margin:0}
+@keyframes pop{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}.confetti{display:none}.progress .bar span{transition:none}}
+@media (max-width:480px){.grid{grid-template-columns:1fr 1fr;gap:10px}.card h2{font-size:16px}.card p{display:none}.body{padding:10px}}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="top"><h1>Guardados de Rasta</h1><span class="count" id="count"></span></div>
+    <input class="search" id="q" type="search" placeholder="Buscar por nombre, lugar, etiqueta…" aria-label="Buscar">
+    <div class="progress" id="progress"><span id="ptext"></span><div class="bar" aria-hidden="true"><span id="pbar"></span></div></div>
+    <nav class="chips" id="chips" aria-label="Categorías"></nav>
+    <div class="seg" id="seg" role="group" aria-label="Mostrar"><button data-show="todo" aria-pressed="true">Todas</button><button data-show="pend" aria-pressed="false">Pendientes</button><button data-show="hechas" aria-pressed="false">Cumplidas</button></div>
+  </div>
+</header>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<main><div class="wrap"><div class="grid" id="grid"></div><div class="empty-state" id="empty" hidden></div></div></main>
+
+<dialog id="dlg"><div class="sheet" id="sheet"></div></dialog>
+
+<script>
+/* Categorías. Agregar nuevas acá. */
+const CATS = [
+  {id:"casa",     name:"Casa",            color:"--c-casa"},
+  {id:"recetas",  name:"Recetas",         color:"--c-recetas"},
+  {id:"libros",   name:"Libros",          color:"--c-libros"},
+  {id:"pelis",    name:"Pelis y series",  color:"--c-pelis"},
+  {id:"musica",   name:"Música",          color:"--c-musica"},
+  {id:"lugares",  name:"Lugares",         color:"--c-lugares"},
+  {id:"tatuajes", name:"Tatuajes",        color:"--c-tatuajes"},
+  {id:"huerta",   name:"Huerta",          color:"--c-huerta"},
+  {id:"entreno",  name:"Entrenamiento",   color:"--c-entreno"},
+  {id:"trabajo",  name:"Trabajo y marketing", color:"--c-trabajo"},
+  {id:"revisar",  name:"Por revisar",     color:"--c-revisar"}
+];
+
+/* Ítems guardados. Los más nuevos arriba. */
+const ITEMS = [
+  {id:"estante-bano", cat:"casa", title:"Estante para el baño",
+   note:"Idea para la casa: un estante para el baño.",
+   link:"https://listado.mercadolibre.com.ar/estante-bano", linkLabel:"Ver opciones", tags:["baño","para comprar"], added:"2026-10-29"},
+  {id:"toallero", cat:"casa", title:"Toallero",
+   note:"Idea para la casa: un toallero. Si es para el baño o la cocina, anotalo desde \"Cambiar categoría, fecha o nota\".",
+   link:"https://listado.mercadolibre.com.ar/toallero", linkLabel:"Ver opciones", tags:["baño","para comprar"], added:"2026-10-29"},
+  {id:"barra-desayunadora", cat:"casa", title:"Barra desayunadora",
+   note:"Idea para la casa: una barra desayunadora. Maderera Ceballos hace mesadas a medida, así que se la podés consultar junto con el cerco y la puerta granero.",
+   link:"https://listado.mercadolibre.com.ar/barra-desayunadora", linkLabel:"Ver ideas y precios", tags:["cocina","mueble","idea"], added:"2026-10-29"},
+  {id:"molinillo-mortero", cat:"casa", title:"Molinillo y mortero",
+   note:"Para la cocina: un molinillo (de pimienta o especias) y un mortero.",
+   link:"https://listado.mercadolibre.com.ar/molinillo-mortero", linkLabel:"Ver opciones", tags:["cocina","para comprar"], added:"2026-10-29"},
+  {id:"maderera-ceballos", cat:"casa", title:"Maderera Ceballos: cercos y puerta granero",
+   note:"Maderera y fábrica de muebles, empresa familiar con más de 30 años. Te interesa para dos cosas: los cercos de madera y una puerta granero (tienen un post de \"Así funcionan nuestras puertas granero\"). También hacen mesadas, mesas, escritorios y cosas para parque y jardín.",
+   img:"img/maderera-ceballos.jpg", cover:"img/maderera-ceballos-cover.jpg",
+   facts:{"Instagram":"@madereraceballos","Web":"madereraceballos.com.ar","Para":"Cerco y puerta granero"},
+   link:"https://madereraceballos.com.ar/", linkLabel:"Ver la web", tags:["proveedor","cerco","puerta granero","madera"], added:"2026-10-29"},
+  {id:"cerco-cana", cat:"casa", title:"Cerco de caña (4 m)",
+   note:"Para el cerco de caña de 4 metros. Cañizos Córdoba vende rollos de caña tejida en distintas medidas, para cercos, techos, balcones y pérgolas. Otra opción que apareció: Isla de Cañas, con paneles de 1 × 1 m a unos $27.000.",
+   img:"img/cerco-cana.jpg", cover:"img/cerco-cana-cover.jpg",
+   facts:{"Proveedor":"Cañizos Córdoba (@canizoscordoba)","Teléfono":"3548-617262","Alternativa":"Isla de Cañas · 1 × 1 m ≈ $27.000"},
+   link:"https://www.instagram.com/canizoscordoba/", linkLabel:"Ver Cañizos Córdoba", tags:["cerco","caña","proveedor","para comprar"], added:"2026-10-29"},
+  {id:"desafio-rutina-jose", cat:"entreno", title:"Desafío: rutina de Jose",
+   note:"Rutina de tren inferior y core que te pasó Jose B. La meta es hacerla 3 veces por semana durante un mes, del 29/10 al 28/11.",
+   challenge:{start:"2026-10-29", end:"2026-11-28", perWeek:3, goal:13}, due:"2026-11-28",
+   steps:[
+     {name:"Movilidad", detail:"5 minutos en el piso: tren inferior, cadera, aductores y sobre todo columna."},
+     {name:"V-hold", detail:"3 series de 20 segundos, con 30 segundos de descanso entre cada una.", video:"https://youtube.com/shorts/FKk2-NatDls"},
+     {name:"Hip thrust a una pierna (sin mancuerna)", detail:"3 series de 10 repeticiones con cada pierna.", video:"https://youtu.be/iRaYkhcs0MI"},
+     {name:"Superman", detail:"3 series de 15 segundos de cada lado.", video:"https://youtube.com/shorts/_vJI27RbmQ8"},
+     {name:"Isométrico de aductores", detail:"4 series de 20 segundos, con 20 segundos de descanso.", video:"https://youtube.com/shorts/d2tST6cI710"}
+   ],
+   facts:{"De":"Jose B","Frecuencia":"3 veces por semana","Meta":"13 sesiones en el mes"},
+   tags:["rutina","desafío","core"], added:"2026-10-29"},
+  {id:"reel-cg0j9c", cat:"recetas", title:"Rollitos de carne y espinaca a la parrilla",
+   note:"Rollos de masa con carne, espinaca y queso, cortados en rodajas, pinchados en brochetas y hechos a la parrilla. Son de Salva la Cocina, y la captura no muestra el nombre que les pone. Ideal para picar en el asado.",
+   img:"img/rollitos-parrilla.jpg", cover:"img/rollitos-parrilla-cover.jpg",
+   facts:{"Cuenta":"@salvalacocina (Castelar)","Cocción":"Parrilla, en brochetas"},
+   link:"https://www.instagram.com/reel/Cg0J9CbjV9c/", linkLabel:"Ver reel", tags:["asado","entrada","brochetas"], added:"2026-10-29"},
+  {id:"reel-cpwcz3", cat:"recetas", title:"Crema catalana",
+   note:"Postre de crema con azúcar caramelizado arriba, servido en cazuelita de barro. El paso a paso está en el reel de Pausa y Plato.",
+   img:"img/crema-catalana.jpg", cover:"img/crema-catalana-cover.jpg",
+   facts:{"Cuenta":"@pausayplato","Tipo":"Postre"},
+   link:"https://www.instagram.com/reel/Cp-wcZ3IH5P/", linkLabel:"Ver reel", tags:["postre","dulce"], added:"2026-10-29"},
+  {id:"reel-crhblb", cat:"lugares", title:"Cascada en Córdoba",
+   note:"Una cascada grande con pozón para meterse, de \"Córdoba te hace bien\" (Córdoba de Viaje y la agencia de turismo de Córdoba). La captura no dice cuál es. Cuando lo veas, cambiale el nombre desde \"Cambiar categoría o nota\".",
+   img:"img/cascada-cordoba.jpg", cover:"img/cascada-cordoba-cover.jpg",
+   facts:{"Cuentas":"@cordobadeviaje y @cbaturismo","Dónde":"Córdoba"},
+   link:"https://www.instagram.com/reel/CrhBlBLphDC/", linkLabel:"Ver reel", tags:["cascada","escapada","falta nombre"], added:"2026-10-29"},
+  {id:"reel-crmnnq", cat:"recetas", title:"Receta de Simón con zapallo al horno",
+   note:"Reel de Las Recetas de Simón. Se ve medio zapallo cortado que va a una asadera, pero el nombre del plato no aparece. Cuando lo veas, cambiale el nombre desde \"Cambiar categoría o nota\".",
+   img:"img/simon-zapallo.jpg", cover:"img/simon-zapallo-cover.jpg",
+   facts:{"Cuenta":"@lasrecetasdesimon"},
+   link:"https://www.instagram.com/reel/CrmNnqFg509/", linkLabel:"Ver reel", tags:["zapallo","horno","falta nombre"], added:"2026-10-29"},
+  {id:"reel-cr4nd2", cat:"recetas", title:"Receta de Simón con cebolla salteada",
+   note:"Otro reel de Las Recetas de Simón. La captura muestra cebolla en juliana salteándose en sartén, pero no el nombre del plato. Cuando lo veas, cambiale el nombre desde \"Cambiar categoría o nota\".",
+   img:"img/simon-cebolla.jpg", cover:"img/simon-cebolla-cover.jpg",
+   facts:{"Cuenta":"@lasrecetasdesimon"},
+   link:"https://www.instagram.com/reel/Cr4Nd2cOouS/", linkLabel:"Ver reel", tags:["cebolla","falta nombre"], added:"2026-10-29"},
+  {id:"reel-ctpgqn", cat:"recetas", title:"Receta con piña y ajíes",
+   note:"Reel de Las Recetas de Simón. En la captura se ven los ingredientes, pero no el nombre del plato: ananá, palta, ajíes frescos y secos, cebolla, tomate, ajo y pimienta rosa. Cuando lo veas, cambiale el nombre desde \"Cambiar categoría o nota\".",
+   img:"img/recetas-simon.jpg", cover:"img/recetas-simon-cover.jpg",
+   facts:{"Cuenta":"@lasrecetasdesimon"},
+   link:"https://www.instagram.com/reel/CtpgQNrg9Jl/", linkLabel:"Ver reel", tags:["picante","ananá","falta nombre"], added:"2026-10-29"},
+  {id:"reel-cu0maj", cat:"recetas", title:"Empanadas de carne a cuchillo",
+   note:"Empanadas de carne cortada a cuchillo, de Salva la Cocina. El paso a paso está en el reel.",
+   img:"img/empanadas-cuchillo.jpg", cover:"img/empanadas-cuchillo-cover.jpg",
+   facts:{"Cuenta":"@salvalacocina (Castelar)","Relleno":"Carne cortada a cuchillo"},
+   link:"https://www.instagram.com/reel/Cu0MAJ9O-Jv/", linkLabel:"Ver reel", tags:["empanadas","carne"], added:"2026-10-29"},
+  {id:"reel-cu9yun", cat:"recetas", title:"Chipá 420 (pan de queso)",
+   note:"Para 3 personas: 1 g de manicuras, 50 ml de leche, 2 huevos, 100 g de manteca, 350 g de fécula de mandioca, 200 g de pategrás y 200 g de parmesano. El paso a paso está en el reel.",
+   img:"img/chipa-420.jpg", cover:"img/chipa-420-cover.jpg",
+   facts:{"Cuenta":"@academiaeduca.ed","Porciones":"3 personas"},
+   link:"https://www.instagram.com/reel/Cu9yUNDgJd9/", linkLabel:"Ver reel", tags:["chipá","queso","cocina 420"], added:"2026-10-29"},
+  {id:"post-c0ulgp", cat:"libros", title:"Recetas cannábicas: libro de cocina 420 chileno",
+   note:"Libro de cocina 420 que versiona clásicos del recetario chileno, como las sopaipillas. El carrusel de El Planteo (9 láminas) muestra el libro y algunas recetas.",
+   img:"img/recetas-420.jpg", cover:"img/recetas-420-cover.jpg",
+   facts:{"Fuente":"@el.planteo (Chile)","Publicado":"1 de diciembre de 2023","Tipo":"Libro de cocina"},
+   link:"https://www.instagram.com/p/C0UlGPOuw3-/", linkLabel:"Ver post", tags:["recetas","cocina 420","para comprar"], added:"2026-10-29"},
+  {id:"reel-c2dbb8", cat:"recetas", title:"Carne a la sal",
+   note:"Un corte grande enterrado en sal gruesa en una asadera y cocinado a las brasas. La costra de sal lo deja jugoso. Para hacer en el asado.",
+   img:"img/carne-a-la-sal.jpg", cover:"img/carne-a-la-sal-cover.jpg",
+   facts:{"Cuenta":"@salvalacocina (Castelar)","Técnica":"Cocción a la sal, a las brasas"},
+   link:"https://www.instagram.com/reel/C2dbb80vk1o/", linkLabel:"Ver reel", tags:["asado","carne","técnica"], added:"2026-10-29"},
+  {id:"reel-c3sjxy", cat:"pelis", title:"¿Qué películas te llevan a un viaje cinematográfico?",
+   note:"Revista THC sale a preguntarle a la gente en una plaza qué pelis los llevan de viaje. Las recomendaciones están en el reel.",
+   img:"img/thc-pregunta.jpg", cover:"img/thc-pregunta-cover.jpg",
+   facts:{"Cuenta":"@revistathc (#THCPregunta)","Publicado":"23 de febrero de 2024","Formato":"Entrevistas en la calle"},
+   link:"https://www.instagram.com/reel/C3sjxYAum5L/", linkLabel:"Ver reel", tags:["lista de pelis","recomendaciones","para ver"], added:"2026-10-29"},
+  {id:"post-c_btgg", cat:"pelis", title:"5 grandes películas sobre la reencarnación",
+   note:"Carrusel de Pijama Surf con 5 películas sobre la vida, la muerte y la reencarnación. Los títulos están en las láminas 2 a 7 del post.",
+   img:"img/reencarnacion.jpg", cover:"img/reencarnacion-cover.jpg",
+   facts:{"Cuenta":"@pijama_surf","Publicado":"23 de agosto de 2024","Formato":"Carrusel de 7 láminas"},
+   link:"https://www.instagram.com/p/C_BtggQMhAW/", linkLabel:"Ver post", tags:["lista de pelis","espiritualidad","para ver"], added:"2026-10-29"},
+  {id:"reel-dmjeki", cat:"casa", title:"Escalera marinera de herrería",
+   note:"Escalera vertical de hierro negro amurada a la pared exterior para subir a la terraza. Idea para el acceso al techo.",
+   img:"img/escalera-marinera.jpg", cover:"img/escalera-marinera-cover.jpg",
+   facts:{"Herrería":"@bgn.herreria","Material":"Hierro pintado negro","Dónde va":"Pared exterior, acceso a terraza"},
+   link:"https://www.instagram.com/reel/DMjeKi9uvGK/", linkLabel:"Ver reel", tags:["herrería","exterior","idea"], added:"2026-10-29"},
+  {id:"reel-dijrmg", cat:"musica", title:"3 tiny desks para ver con amigos",
+   note:"Lara Gianina recomienda tres Tiny Desk Concerts (los conciertos chiquitos de NPR) para ver en grupo. Los nombres están en el reel.",
+   img:"img/tiny-desks.jpg", cover:"img/tiny-desks-cover.jpg",
+   facts:{"Cuenta":"@laragianina","Formato":"Tiny Desk Concerts (NPR, en YouTube)"},
+   link:"https://www.instagram.com/reel/DIJrMg1Rgfm/", linkLabel:"Ver reel", tags:["conciertos","para ver con amigos"], added:"2026-10-29"},
+  {id:"reel-dordvh", cat:"musica", title:"Top 5 EDM songs that hit way too hard",
+   note:"Reel con un ranking de 5 temas de electrónica. Mirá el reel para ver la lista. De fondo suena «Fancy $hit» de CID y Taylr Renee.",
+   img:"img/edm-top5.jpg", cover:"img/edm-top5-cover.jpg",
+   facts:{"Cuenta":"@iamjustinwestphal","Género":"EDM / electrónica","Tema de fondo":"CID, Taylr Renee · Fancy $hit"},
+   link:"https://www.instagram.com/reel/DOrDvHjD_ym/", linkLabel:"Ver reel", tags:["edm","playlist","para escuchar"], added:"2026-10-29"},
+  {id:"carousel-genius", cat:"trabajo", title:"How to become a Carousel Genius",
+   note:"Carrusel de design.deb sobre cómo diseñar carruseles que no mueran en la primera slide («Most carousels die on slide 1»). Referencia de diseño para el contenido de la agencia.",
+   img:"img/carousel-genius.jpg", cover:"img/carousel-genius-cover.jpg",
+   facts:{"Cuenta":"@design.deb","Publicado":"12 de octubre","Tema":"Diseño de carruseles"},
+   link:"https://www.instagram.com/design.deb/", linkLabel:"Ver cuenta", tags:["diseño","carrusel","idea de contenido"], added:"2026-10-29"},
+  {id:"reel-dzj8yz", cat:"huerta", title:"Pothos en una piña",
+   note:"Un gajo de pothos que enraíza dentro de una piña de pino, apoyada en perlita dentro de un bowl de vidrio. Idea linda y fácil para hacer con un esqueje.",
+   img:"img/pothos-pina.jpg", cover:"img/pothos-pina-cover.jpg",
+   facts:{"Cuentas":"@aronuma_ y @barkarium","Planta":"Pothos (potus)"},
+   link:"https://www.instagram.com/reel/DZj8YZexlVA/", linkLabel:"Ver reel", tags:["plantas","esqueje","deco"], added:"2026-10-29"},
+  {id:"reel-dcjtea", cat:"trabajo", title:"Cómo hacer que la IA elija a tu marca",
+   note:"Reel de Caro Dubi sobre cómo lograr que los asistentes de IA (tipo ChatGPT) le muestren tu producto a la gente cuando pregunta. Sirve para clientes de la agencia.",
+   img:"img/ia-elija-marca.jpg", cover:"img/ia-elija-marca-cover.jpg",
+   facts:{"Cuenta":"@carodubi","Tema":"Visibilidad de marca en buscadores de IA"},
+   link:"https://www.instagram.com/reel/DcjtEaJDSqe/", linkLabel:"Ver reel", tags:["IA","posicionamiento","marca"], added:"2026-10-29"},
+  {id:"desmalezadora-coloso", cat:"huerta", title:"Desmalezadora a batería",
+   note:"Desmalezadora inalámbrica, liviana y sin nafta, para el pasto del jardín y los alrededores de la huerta.",
+   img:"img/desmalezadora.jpg", cover:"img/desmalezadora-cover.jpg",
+   facts:{"Dónde":"Ferretería El Coloso (@elcolosoferreteria_ok)","Precio visto":"$159.900 en efectivo o transferencia","Visto":"Historia de Instagram, oct. 2026"},
+   link:"https://www.instagram.com/elcolosoferreteria_ok/", linkLabel:"Ver ferretería", tags:["herramienta","jardín","para comprar"], added:"2026-10-29"},
+  {id:"peli-get-him-to-the-greek", cat:"pelis", title:"Get Him to the Greek",
+   note:"Comedia: un empleado de una discográfica tiene que llevar a un rockstar descontrolado de Londres a Los Ángeles para un show.",
+   facts:{"Año":"2010","Dirección":"Nicholas Stoller","Con":"Jonah Hill, Russell Brand","Género":"Comedia"},
+   link:"https://www.justwatch.com/ar/buscar?q=Get%20Him%20to%20the%20Greek", linkLabel:"Dónde verla", tags:["comedia","para ver"], added:"2026-08-27"},
+  {id:"peli-tenet", cat:"pelis", title:"Tenet",
+   note:"Thriller de espionaje de Nolan con manipulación del tiempo. De esas para ver con atención (y quizás dos veces).",
+   facts:{"Año":"2020","Dirección":"Christopher Nolan","Con":"John David Washington, Robert Pattinson","Género":"Ciencia ficción, acción"},
+   link:"https://www.justwatch.com/ar/buscar?q=Tenet", linkLabel:"Dónde verla", tags:["nolan","ciencia ficción","para ver"], added:"2026-08-27"},
+  {id:"peli-el-truco-final", cat:"pelis", title:"El truco final (El prestigio)",
+   note:"Dos magos en la Londres victoriana compiten hasta la obsesión por el mejor truco.",
+   facts:{"Año":"2006","Dirección":"Christopher Nolan","Con":"Hugh Jackman, Christian Bale","Género":"Drama, misterio"},
+   link:"https://www.justwatch.com/ar/buscar?q=The%20Prestige", linkLabel:"Dónde verla", tags:["nolan","misterio","para ver"], added:"2026-08-27"},
+  {id:"cosmos", cat:"trabajo", title:"Cosmos",
+   note:"App para juntar referencias visuales y armar moodboards, tipo Pinterest pero sin publicidad y más curada. Útil para buscar inspiración de diseño y contenido.",
+   facts:{"Tipo":"Herramienta web y app","Sirve para":"Moodboards e inspiración visual"},
+   link:"https://www.cosmos.so/", linkLabel:"Abrir Cosmos", tags:["herramienta","inspiración","moodboard"], added:"2026-10-29"},
+  {id:"reel-ddk4qc", cat:"trabajo", title:"Craft Motion",
+   note:"Reel de motion design: logo que cae como péndulo y tipografía 3D con sombra. «Motion that catches the eye and stops the scroll.» Referencia visual para animaciones de marca.",
+   img:"img/gozmotion.jpg", cover:"img/gozmotion-cover.jpg",
+   facts:{"Cuenta":"@gozmotion.ae","Estilo":"Motion · editorial · storytelling"},
+   link:"https://www.instagram.com/reel/Ddk4QCztUEN/", linkLabel:"Ver reel", tags:["motion design","referencia visual","animación de logo"], added:"2026-10-29"},
+  {id:"post-dd9fw5", cat:"trabajo", title:"Piedra, papel o tijera: versión marketing",
+   note:"Carrusel de REBRND que enfrenta errores y aciertos de marca con piedra, papel o tijera. Ej.: «Ver que tu feed solo se vea aesthetic» (tijera) contra «Crear una marca única y memorable» (piedra). Buena idea de formato para contenido.",
+   img:"img/rebrnd-piedra-papel.jpg", cover:"img/rebrnd-piedra-papel-cover.jpg",
+   facts:{"Cuenta":"@rebrndmx (agencia de branding)","Formato":"Carrusel comparativo","Publicado":"1 de octubre"},
+   link:"https://www.instagram.com/p/Dd9FW5zlycl/?img_index=9", linkLabel:"Ver post", tags:["branding","idea de contenido","carrusel"], added:"2026-10-29"},
+  {id:"post-dd9gwr", cat:"trabajo", title:"3 prompts para el onboarding de vendedores",
+   note:"«Un vendedor nuevo tarda tres meses en ser útil. Con estos tres prompts, tres semanas.» Carrusel de 8 slides; los prompts los manda por DM si comentás PROMPT.",
+   img:"img/prompts-vendedores.jpg", cover:"img/prompts-vendedores-cover.jpg",
+   facts:{"Autor":"Leo Migdal (@leo.migdal)","Serie":"El Prompt · 25","Para conseguirlo":"Comentar PROMPT en el post"},
+   link:"https://www.instagram.com/p/Dd9gWRFm7mh/?img_index=3", linkLabel:"Ver post", tags:["prompts","ventas","onboarding"], added:"2026-10-29"},
+  {id:"reel-daubb8", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DAUBb8By-0z/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-dbqzfh", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DBq-ZFHReMS/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-dlvfpf", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DLV_FPfR2_v/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-dkk7g1", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DKk7g1BNeF8/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-djn3nu", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DJn3nuKsrRF/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-dpgopm", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DPGopMIDYXX/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-dqvf9d", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DQVF9dyDIHR/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"mostaza-casera", cat:"recetas", title:"Mostaza casera",
+   note:"Dos versiones: a la antigua y rústica. Semillas de mostaza amarilla, vinagre blanco, miel, cúrcuma, sal y agua.",
+   facts:{"Autora":"Mate Amargo (Cookpad)","Tiempo":"2 días, casi todo de reposo en heladera","Rinde":"Mucha"},
+   link:"https://cookpad.com/ar/recetas/17013137", linkLabel:"Ver receta", tags:["casero","aderezo","asado"], added:"2026-10-29"},
+  {id:"el-tecnico", cat:"casa", title:"El Técnico: lavarropas y microondas",
+   note:"Service de electrodomésticos para tener a mano cuando se rompa el lavarropas o el microondas.",
+   facts:{"Rubro":"Reparación de lavarropas y microondas","Zona":"Sierras Chicas, Córdoba (zona Salsipuedes, según el mapa)"},
+   link:"https://maps.app.goo.gl/QE2QTi5ve2JMpMc57", linkLabel:"Abrir en Maps", tags:["técnico","electrodomésticos","contacto"], added:"2026-10-29"},
+  {id:"enduido-humedex", cat:"casa", title:"Enduido siliconado impermeabilizante",
+   note:"Enduido de Humedex para paredes con humedad: impermeabiliza antes de pintar.",
+   facts:{"Marca":"Humedex","Uso":"Paredes con humedad"},
+   link:"https://humedex.com.ar/productos/enduido-siliconado-impermeabilizante-humedex/", linkLabel:"Ver producto", tags:["humedad","pintura","para comprar"], added:"2026-10-29"},
+  {id:"pan-ajo-brasileno", cat:"recetas", title:"Pan de ajo brasileño",
+   note:"Receta fácil y cremosa para acompañar el asado.",
+   facts:{"Para":"Acompañar el asado","Dificultad":"Fácil"},
+   link:"https://share.google/Y17NPfDvfOHrxQpCD", linkLabel:"Ver receta", tags:["asado","pan","acompañamiento"], added:"2026-10-29"},
+  {id:"reel-dcrdfq", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DcrdFQvh_KJ/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-dd7aok", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/Dd7aOk_O-ex/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"reel-dfaxf2", cat:"revisar", title:"Reel de Instagram",
+   note:"No pude abrir el contenido del reel desde acá. Contame de qué es (o mandá una captura) y lo paso a su categoría.",
+   link:"https://www.instagram.com/reel/DfAxf2GhK9B/", linkLabel:"Ver reel", tags:["instagram","reel"], added:"2026-10-29"},
+  {id:"tattoo-luck", cat:"tatuajes", title:"Tragamonedas «LUCK»",
+   note:"Tatuaje de línea fina: una tragamonedas cuyos rodillos dicen LUCK, con la F asomando en el primero. Símbolos de trébol, calavera, cerezas, estrella, diamante y 7.",
+   img:"img/tattoo-luck.jpg", cover:"img/tattoo-luck-cover.jpg",
+   facts:{"Artista":"@klokreates.tattoo","Estilo":"Fine line, solo contorno","Zona":"Pierna, arriba de la rodilla"},
+   link:"https://www.instagram.com/klokreates.tattoo/", linkLabel:"Ver perfil del artista", tags:["fine line","idea"], added:"2026-10-29"},
+  {id:"golpe-de-agua", cat:"lugares", title:"Golpe de Agua",
+   note:"Atracción natural en Córdoba: río con piedras, cascadita y pinos. Para ir a pasar el día.",
+   img:"img/golpe-de-agua.jpg", cover:"img/golpe-de-agua-cover.jpg",
+   facts:{"Dónde":"Córdoba","Puntaje":"4,5 en Google Maps (970 opiniones)","Distancia":"2 h 45 min en auto (desde donde hiciste la captura)"},
+   link:"https://www.google.com/maps/search/?api=1&query=Golpe+de+Agua+C%C3%B3rdoba", linkLabel:"Abrir en Maps", tags:["río","naturaleza","escapada"], added:"2026-10-29"},
+  {id:"doble-bitacora", cat:"libros", title:"Doble bitácora",
+   note:"Pack de dos cuadernos de ejercicios de El Gato y la Caja: uno para el cuidado de la salud mental y otro para sentirte mejor.",
+   img:"img/doble-bitacora.jpg", cover:"img/doble-bitacora-cover.jpg",
+   facts:{"Editorial":"El Gato y la Caja","Tipo":"Cuadernos de ejercicios","Precio visto":"$63.400 ($57.060 por transferencia)"},
+   link:"https://tienda.elgatoylacaja.com/", linkLabel:"Ir a la tienda", tags:["salud mental","para comprar"], added:"2026-10-29"}
+];
+
+const $ = s => document.querySelector(s);
+const catOf = id => CATS.find(c => c.id === id) || CATS.find(c => c.id === "revisar");
+let current = "todo";
+
+/* Cambios que Rasta hace desde la app (categoría, nombre, nota), guardados en la base "ajustes". */
+let OVR = {}, db = null;
+/* Guardado local (localStorage, por dispositivo) con la misma forma que la base del artifact. */
+const LOCAL_SEED = {"ajustes": {"reel-daubb8": {"cat": "casa", "note": "", "title": "Barra asador", "updatedAt": "2026-10-29T18:32:24.938Z"}, "reel-dbqzfh": {"cat": "recetas", "note": "", "title": "Osobuco con fideo a la manteca", "updatedAt": "2026-10-29T18:33:25.597Z"}, "reel-dcrdfq": {"cat": "trabajo", "note": "", "title": "Web videos", "updatedAt": "2026-10-29T18:38:12.959Z"}, "reel-dd7aok": {"cat": "recetas", "note": "", "title": "Berenjenas fritas", "updatedAt": "2026-10-29T18:38:34.690Z"}, "reel-dfaxf2": {"cat": "recetas", "note": "", "title": "Champiñones rellenos", "updatedAt": "2026-10-29T18:39:01.566Z"}, "reel-djn3nu": {"cat": "recetas", "note": "", "title": "Huevos Deco", "updatedAt": "2026-10-29T18:35:34.498Z"}, "reel-dkk7g1": {"cat": "recetas", "note": "", "title": "Palta frita", "updatedAt": "2026-10-29T18:34:49.134Z"}, "reel-dlvfpf": {"cat": "lugares", "note": "", "title": "Bar un lugar", "updatedAt": "2026-10-29T18:34:17.545Z"}, "reel-dpgopm": {"cat": "huerta", "note": "", "title": "Tomates", "updatedAt": "2026-10-29T18:36:52.152Z"}, "reel-dqvf9d": {"cat": "recetas", "note": "", "title": "Entraña rellena", "updatedAt": "2026-10-29T18:37:41.461Z"}}, "hechos": {}, "sesiones": {}};
+const localDb = (() => {
+  const KEY = "guardados:", subs = {};
+  const load = c => { try{ const v = localStorage.getItem(KEY+c); if(v) return JSON.parse(v); }catch(e){} return {...(LOCAL_SEED[c]||{})}; };
+  const store = c => { try{ localStorage.setItem(KEY+c, JSON.stringify(load.cache[c])); }catch(e){} };
+  load.cache = {};
+  const get = c => load.cache[c] || (load.cache[c] = load(c));
+  const emit = c => (subs[c]||[]).forEach(cb => cb({docs:Object.entries(get(c)).map(([id,v]) => ({id, exists:true, data:()=>v}))}));
+  return { collection: c => ({
+    doc: id => ({
+      set: async v => { get(c)[id] = v; store(c); emit(c); },
+      delete: async () => { delete get(c)[id]; store(c); emit(c); }
+    }),
+    onSnapshot: cb => { (subs[c] = subs[c] || []).push(cb); setTimeout(() => cb({docs:Object.entries(get(c)).map(([id,v]) => ({id, exists:true, data:()=>v}))})); return () => {}; }
+  })};
+})();
+
+/* Cosas cumplidas (vistas, hechas, visitadas), guardadas en la base "hechos". */
+let DONE = {}, show = "todo";
+const DONE_LABEL = {pelis:"La vi", recetas:"La hice", libros:"Lo leí", lugares:"Fui", tatuajes:"Me lo hice", musica:"Lo escuché", trabajo:"Lo apliqué", entreno:"Hecho", huerta:"Hecho", casa:"Hecho", revisar:"Hecho"};
+const doneLabel = cat => DONE_LABEL[cat] || "Hecho";
+const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
+const view = () => ITEMS.map(i => OVR[i.id] ? {...i, ...OVR[i.id], tags:(i.tags||[]).filter(t=>t!=="reel"&&t!=="post"||!OVR[i.id].cat||OVR[i.id].cat==="revisar")} : i);
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function renderChips(){
+  const all = [{id:"todo",name:"Todo",color:"--accent"}, ...CATS];
+  $("#chips").innerHTML = all.map(c=>{
+    const n = c.id==="todo" ? view().length : view().filter(i=>i.cat===c.id).length;
+    return `<button class="chip${n?"":" empty"}" id="chip-${c.id}" data-id="${c.id}" aria-pressed="${c.id===current}" style="--c:var(${c.color})"><span class="dot"></span>${esc(c.name)} <span class="n">${n}</span></button>`;
+  }).join("");
+}
+
+function matches(item,q){
+  if(!q) return true;
+  const hay = [item.title,item.note,catOf(item.cat).name,...(item.tags||[]),...Object.values(item.facts||{})].join(" ").toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g,"");
+  return hay.includes(q);
+}
+
+function render(){
+  const q = $("#q").value.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  const inCat = view().filter(i => current==="todo"||i.cat===current);
+  const list = inCat.filter(i => matches(i,q) && (show==="todo" || (show==="hechas") === isDone(i)));
+  $("#count").textContent = `${view().length} guardados · ${CATS.filter(c=>view().some(i=>i.cat===c.id)).length} categorías en uso`;
+  const nDone = inCat.filter(isDone).length, cName = current==="todo" ? "" : ` en ${catOf(current).name}`;
+  $("#ptext").innerHTML = `<b>${nDone}</b> de ${inCat.length} cumplidas${esc(cName)}`;
+  $("#pbar").style.width = inCat.length ? `${Math.round(nDone/inCat.length*100)}%` : "0";
+  $("#grid").innerHTML = list.map(i=>{
+    const c = catOf(i.cat), d = isDone(i), st = i.challenge ? chStats(i) : null, tickOn = st ? st.today : d;
+    const media = i.cover ? `<img class="cover" src="${i.cover}" alt="" loading="lazy">`
+      : i.challenge ? `<div class="ph"><span><b>Desafío</b>${i.challenge.perWeek} veces por semana</span></div>`
+      : `<div class="ph"><span><b>${i.cat==="revisar"?(i.tags.includes("post")?"Post":"Reel"):esc(i.cat==="pelis"?i.title:c.name)}</b>${i.cat==="revisar"?"sin clasificar":(i.facts&&i.facts["Año"]?esc(i.facts["Año"]):"sin imagen")}</span></div>`;
+    return `<div class="cell${d?" done":""}"><button class="card" data-id="${i.id}" style="--c:var(${c.color})">${media}
+      <div class="body"><span class="cat">${esc(c.name)}</span><h2>${esc(i.title)}</h2>${lightBadge(i)}${st?`<span class="done-badge">${st.done}/${st.goal} sesiones · semana ${st.week}/${st.perWeek}</span><div class="mini" aria-hidden="true"><span style="width:${Math.min(100,Math.round(st.done/st.goal*100))}%"></span></div>`:d?`<span class="done-badge">${CHECK.replace('aria-hidden','width="12" height="12" aria-hidden')} ${esc(doneLabel(i.cat))}</span>`:""}<p>${esc(i.note)}</p>
+      <div class="tags">${(i.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div></div></button>
+      ${db?`<button class="tick" data-tick="${i.id}" aria-pressed="${tickOn}" aria-label="${st?(tickOn?"Desmarcar hoy":"Marcar hoy como cumplido"):(d?"Desmarcar":"Marcar como cumplida")}: ${esc(i.title)}" title="${st?"Hoy":esc(doneLabel(i.cat))}">${CHECK}</button>`:""}</div>`;
+  }).join("");
+  const empty = $("#empty");
+  empty.hidden = list.length>0;
+  if(!list.length){
+    const c = catOf(current);
+    empty.innerHTML = q ? `<b>Nada coincide con “${esc($("#q").value)}”</b>Probá con otra palabra o elegí “Todo”.`
+      : show==="hechas" && inCat.length ? `<b>Todavía no cumpliste nada acá</b>Tocá el círculo de una tarjeta cuando lo hagas, lo veas o vayas.`
+      : show==="pend" && inCat.length ? `<b>¡Cumpliste todo lo de acá!</b>Mandá más cosas en el chat cuando quieras.`
+      : `<b>Todavía no hay nada en ${esc(c?c.name:"esta categoría")}</b>Mandá un link o una captura en el chat y aparece acá.`;
+  }
+}
+
+function open(id){
+  const i = view().find(x=>x.id===id), c = catOf(i.cat);
+  const facts = i.facts ? `<dl class="facts">${Object.entries(i.facts).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : "";
+  $("#sheet").style.setProperty("--c",`var(${c.color})`);
+  $("#sheet").innerHTML = `${i.img?`<img src="${i.img}" alt="${esc(i.title)}">`:""}
+    <div class="in"><span class="cat">${esc(c.name)}</span><h3>${esc(i.title)}</h3>${i.challenge?"":lightBadge(i)}<p>${esc(i.note)}</p>${facts}${steps(i)}${calendar(i)}
+    <div class="tags">${(i.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
+    <div class="actions">${i.link?`<a class="btn primary" href="${i.link}" target="_blank" rel="noopener">${esc(i.linkLabel||"Abrir link")}</a>`:""}
+    ${db?(i.challenge?`<button class="btn" id="sheet-tick" aria-pressed="${chStats(i).today}">${chStats(i).today?"✓ Hoy cumplido · desmarcar":"Marcar hoy"}</button>`:`<button class="btn" id="sheet-tick" aria-pressed="${!!DONE[i.id]}">${DONE[i.id]?`✓ ${esc(doneLabel(i.cat))} · desmarcar`:`Marcar: ${esc(doneLabel(i.cat))}`}</button>`):""}
+    <button class="btn" id="close">Cerrar</button></div>
+    ${editor(i)}</div>`;
+  $("#close").onclick = () => $("#dlg").close();
+  const st = $("#sheet-tick");
+  if(st) st.onclick = async e => { await (i.challenge ? toggleDay(i.id, ymd(new Date()), e.currentTarget) : toggleDone(i.id, e.currentTarget)); open(i.id); };
+  $("#sheet").querySelectorAll(".cal button[data-day]").forEach(b => b.onclick = async e => { await toggleDay(i.id, b.dataset.day, e.currentTarget); open(i.id); });
+  const f = $("#edit-form");
+  if(f) f.addEventListener("submit", e => { e.preventDefault(); save(i.id); });
+  $("#dlg").showModal();
+}
+
+function editor(i){
+  const pending = i.cat === "revisar";
+  const body = db
+    ? `<form id="edit-form" class="edit-form">
+        <label for="edit-cat">Categoría</label>
+        <select id="edit-cat">${CATS.map(c=>`<option value="${c.id}"${c.id===(pending?"":i.cat)?" selected":""}>${esc(c.name)}</option>`).join("")}${pending?`<option value="" selected disabled>Elegí una…</option>`:""}</select>
+        <label for="edit-title">Nombre</label>
+        <input id="edit-title" type="text" value="${esc(pending && /^(Reel|Post) de Instagram$/.test(i.title) ? "" : i.title)}" placeholder="Ej.: Receta de ñoquis, Idea para el living…">
+        <label for="edit-due">Fecha límite (opcional)</label>
+        <input id="edit-due" type="date" value="${esc(i.due||"")}">
+        <label for="edit-note">Nota (opcional)</label>
+        <textarea id="edit-note" rows="2" placeholder="De qué se trata, por qué lo guardaste…">${esc(pending && !OVR[i.id] ? "" : i.note)}</textarea>
+        <div class="edit-row"><button class="btn primary" type="submit" id="edit-save">Guardar</button><span class="edit-msg" id="edit-msg" role="status"></span></div>
+      </form>`
+    : `<p class="edit-msg">Para guardar cambios, abrí la app con tu cuenta de Claude.</p>`;
+  return `<details class="edit"${pending?" open":""}><summary>${pending?"Etiquetar":"Cambiar categoría, fecha o nota"}</summary>${body}</details>`;
+}
+
+async function save(id){
+  const cat = $("#edit-cat").value, title = $("#edit-title").value.trim(), note = $("#edit-note").value.trim();
+  const msg = $("#edit-msg");
+  if(!cat){ msg.textContent = "Elegí una categoría."; return; }
+  const base = ITEMS.find(x=>x.id===id);
+  const data = {cat, updatedAt:new Date().toISOString()};
+  const due = $("#edit-due").value; data.due = due || "";
+  if(title) data.title = title;
+  if(note) data.note = note; else if(base.cat==="revisar") data.note = "";
+  $("#edit-save").disabled = true; msg.textContent = "Guardando…";
+  try{
+    await db.collection("ajustes").doc(id).set(data);
+    msg.textContent = `Guardado en ${catOf(cat).name}.`;
+    setTimeout(()=>$("#dlg").close(), 700);
+  }catch(e){
+    msg.textContent = e && e.code==="permission_denied" ? "Tu cuenta no tiene permiso para editar esta app." : "No se pudo guardar. Probá de nuevo en un rato.";
+  }finally{ const b=$("#edit-save"); if(b) b.disabled = false; }
+}
+
+(async () => {
+  db = await Promise.resolve(localDb);
+  if(!db) return;
+  db.collection("ajustes").onSnapshot(snap => {
+    const next = {};
+    snap.docs.forEach(d => { if(d.exists){ const v = d.data(); next[d.id] = {cat:v.cat, ...(v.title?{title:v.title}:{}), ...(typeof v.note==="string"?{note:v.note}:{}), ...(typeof v.due==="string"?{due:v.due||undefined}:{})}; } });
+    OVR = next; renderChips(); render();
+  }, () => {});
+  db.collection("hechos").onSnapshot(snap => {
+    const next = {};
+    snap.docs.forEach(d => { if(d.exists && d.data().done) next[d.id] = d.data().at || true; });
+    DONE = next; render();
+  }, () => {});
+  db.collection("sesiones").onSnapshot(snap => {
+    const next = {};
+    snap.docs.forEach(d => { if(d.exists){ const v = d.data(); (next[v.item] = next[v.item] || new Set()).add(v.date); } });
+    SESS = next; render();
+  }, () => {});
+  render();
+})();
+
+/* Desafíos de N días: un check por día, guardado en la base "sesiones" (doc = item_fecha). */
+let SESS = {};
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+function chDays(i){
+  const s = new Date(i.challenge.start+"T12:00:00"), e = i.due || i.challenge.end, out = [];
+  for(let d = new Date(s); ymd(d) <= e; d.setDate(d.getDate()+1)) out.push(ymd(d));
+  return out;
+}
+function chStats(i){
+  const days = chDays(i), set = SESS[i.id] || new Set(), t = ymd(new Date());
+  const done = days.filter(d=>set.has(d)).length;
+  const mon = new Date(); mon.setDate(mon.getDate() - ((mon.getDay()+6)%7));
+  const week = [...Array(7)].map((_,k)=>{ const d = new Date(mon); d.setDate(mon.getDate()+k); return ymd(d); }).filter(d=>set.has(d)).length;
+  return {goal:i.challenge.goal, perWeek:i.challenge.perWeek, done, week, today:set.has(t)};
+}
+const isDone = i => i.challenge ? chStats(i).done >= i.challenge.goal : !!DONE[i.id];
+
+/* Fechas límite y semáforo: verde con tiempo, amarillo cuando se acerca, rojo cuando queda poco o venció. */
+function daysLeft(due){
+  if(!due) return null;
+  const a = new Date(ymd(new Date())+"T12:00:00"), b = new Date(due+"T12:00:00");
+  return Math.round((b-a)/86400000);
+}
+function light(i){
+  if(!i.due || isDone(i)) return null;
+  const n = daysLeft(i.due), [, m, d] = i.due.split("-");
+  const tone = n < 0 || n <= 3 ? "bad" : n <= 10 ? "warn" : "ok";
+  const txt = n < 0 ? `Venció hace ${-n} día${n===-1?"":"s"}` : n === 0 ? "Vence hoy" : `Faltan ${n} día${n===1?"":"s"}`;
+  return {tone, txt, date:`${+d}/${+m}`};
+}
+const lightBadge = i => { const l = light(i); return l ? `<span class="light ${l.tone}"><i aria-hidden="true"></i>${l.txt} · ${l.date}</span>` : ""; };
+function steps(i){
+  if(!i.steps) return "";
+  return `<ol class="steps">${i.steps.map(s=>`<li><b>${esc(s.name)}</b><span>${esc(s.detail)}</span>${s.video?`<a href="${s.video}" target="_blank" rel="noopener">Ver video</a>`:""}</li>`).join("")}</ol>`;
+}
+function calendar(i){
+  if(!i.challenge) return "";
+  const st = chStats(i), set = SESS[i.id] || new Set(), t = ymd(new Date());
+  const cells = chDays(i).map((d,k)=>{
+    const on = set.has(d), fut = d>t, [, m, dd] = d.split("-");
+    return `<button class="${on?"on":""}${d===t?" today":""}" ${fut||!db?"disabled":""} data-day="${d}" aria-pressed="${on}" aria-label="Día ${k+1}, ${+dd}/${+m}${on?", cumplido":""}">${k+1}</button>`;
+  }).join("");
+  return `<div class="ch"><div class="ch-stats"><span><b>${st.done}</b>/${st.goal} sesiones</span><span>Esta semana: <b>${st.week}</b>/${st.perWeek}</span>${lightBadge(i)}</div>
+    <div class="cal">${cells}</div><p class="ch-hint">Marcá los días que entrenás (${st.perWeek} por semana). Tocá un día pasado si te olvidaste.</p></div>`;
+}
+async function toggleDay(id, day, el){
+  if(!db) return;
+  const ref = db.collection("sesiones").doc(`${id}_${day}`), was = (SESS[id]||new Set()).has(day), rect = el ? el.getBoundingClientRect() : null;
+  try{
+    if(was){ await ref.delete(); toast("Desmarcado."); }
+    else{
+      await ref.set({item:id, date:day, at:new Date().toISOString()});
+      if(rect) confetti(rect);
+      const it = ITEMS.find(x=>x.id===id), st = chStats(it), n = st.done + ((SESS[id]||new Set()).has(day)?0:1);
+      toast(n >= st.goal ? "¡Desafío cumplido! 🏆" : `${CHEERS[Math.floor(Math.random()*CHEERS.length)]} Sesión ${n} de ${st.goal}.`);
+    }
+  }catch(e){ toast("No se pudo guardar. Probá de nuevo."); }
+}
+
+const CHEERS = ["¡Uno menos!", "¡Bien ahí!", "¡Tachado!", "¡Cumplido!", "¡Eso!"];
+let toastTimer;
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove("show"), 2200);
+}
+function confetti(r){
+  const x = r.left + r.width/2, y = r.top + r.height/2;
+  const colors = CATS.map(c=>getComputedStyle(document.documentElement).getPropertyValue(c.color).trim()).filter(Boolean);
+  for(let k=0;k<16;k++){
+    const s = document.createElement("span"); s.className = "confetti";
+    const a = Math.random()*Math.PI*2, d = 40 + Math.random()*60;
+    s.style.cssText = `left:${x}px;top:${y}px;background:${colors[k%colors.length]};--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d+30}px;--r:${Math.random()*540}deg`;
+    document.body.appendChild(s); setTimeout(()=>s.remove(), 900);
+  }
+}
+async function toggleDone(id, el){
+  if(!db) return;
+  const ref = db.collection("hechos").doc(id), was = !!DONE[id], rect = el ? el.getBoundingClientRect() : null;
+  try{
+    if(was){ await ref.delete(); toast("Lo volví a dejar pendiente."); }
+    else{
+      await ref.set({done:true, at:new Date().toISOString()});
+      if(rect) confetti(rect);
+      const n = Object.keys(DONE).length + (DONE[id]?0:1);
+      toast(`${CHEERS[Math.floor(Math.random()*CHEERS.length)]} Ya van ${n} cumplidas.`);
+    }
+  }catch(e){
+    toast(e && e.code==="permission_denied" ? "Tu cuenta no tiene permiso para marcar cosas acá." : "No se pudo guardar. Probá de nuevo.");
+  }
+}
+
+function setCat(id){
+  current = CATS.some(c=>c.id===id) ? id : "todo";
+  renderChips(); render();
+}
+
+$("#chips").addEventListener("click", e=>{
+  const b = e.target.closest(".chip"); if(!b) return;
+  const id = b.dataset.id;
+  if(id==="todo"){ history.replaceState(null,"",location.pathname+location.search); setCat("todo"); }
+  else location.hash = id;
+});
+$("#grid").addEventListener("click", e=>{
+  const t = e.target.closest(".tick"); if(t){ const it = ITEMS.find(x=>x.id===t.dataset.tick); it && it.challenge ? toggleDay(it.id, ymd(new Date()), t) : toggleDone(t.dataset.tick, t); return; }
+  const b = e.target.closest(".card"); if(b) open(b.dataset.id);
+});
+$("#seg").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  show = b.dataset.show;
+  $("#seg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b));
+  render();
+});
+$("#dlg").addEventListener("click", e=>{ if(e.target===$("#dlg")) $("#dlg").close() });
+$("#q").addEventListener("input", render);
+addEventListener("hashchange", ()=>setCat(location.hash.slice(1)));
+setCat(location.hash.slice(1));
+</script>
+
+</html>
