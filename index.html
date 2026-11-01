@@ -136,7 +136,6 @@ dialog::backdrop{background:rgba(10,14,12,.55)}
     <input class="search" id="q" type="search" placeholder="Buscar por nombre, lugar, etiqueta…" aria-label="Buscar">
     <div class="progress" id="progress"><span id="ptext"></span><div class="bar" aria-hidden="true"><span id="pbar"></span></div></div>
     <nav class="chips" id="chips" aria-label="Categorías"></nav>
-    <div class="seg" id="seg" role="group" aria-label="Mostrar"><button data-show="todo" aria-pressed="true">Todas</button><button data-show="pend" aria-pressed="false">Pendientes</button><button data-show="hechas" aria-pressed="false">Cumplidas</button></div>
   </div>
 </header>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -423,7 +422,10 @@ const localDb = (() => {
 })();
 
 /* Cosas cumplidas (vistas, hechas, visitadas), guardadas en la base "hechos". */
-let DONE = {}, show = "todo";
+let DONE = {};
+/* Lo cumplido sale de su categoría y pasa a "Terminados"; si se desmarca, vuelve. */
+const TERM = {id:"terminados", name:"Terminados", color:"--ok"};
+const finished = i => !i.challenge && isDone(i);
 const DONE_LABEL = {pelis:"La vi", recetas:"La hice", libros:"Lo leí", lugares:"Fui", tatuajes:"Me lo hice", musica:"Lo escuché", trabajo:"Lo apliqué", entreno:"Hecho", huerta:"Hecho", casa:"Hecho", revisar:"Hecho"};
 const doneLabel = cat => DONE_LABEL[cat] || "Hecho";
 const CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
@@ -432,9 +434,9 @@ const view = () => ITEMS.map(i => OVR[i.id] ? {...i, ...OVR[i.id], tags:(i.tags|
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 
 function renderChips(){
-  const all = [{id:"todo",name:"Todo",color:"--accent"}, ...CATS];
+  const all = [{id:"todo",name:"Todo",color:"--accent"}, ...CATS, TERM], v = view();
   $("#chips").innerHTML = all.map(c=>{
-    const n = c.id==="todo" ? view().length : view().filter(i=>i.cat===c.id).length;
+    const n = c.id==="terminados" ? v.filter(finished).length : v.filter(i=>!finished(i) && (c.id==="todo"||i.cat===c.id)).length;
     return `<button class="chip${n?"":" empty"}" id="chip-${c.id}" data-id="${c.id}" aria-pressed="${c.id===current}" style="--c:var(${c.color})"><span class="dot"></span>${esc(c.name)} <span class="n">${n}</span></button>`;
   }).join("");
 }
@@ -448,10 +450,11 @@ function matches(item,q){
 
 function render(){
   const q = $("#q").value.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-  const inCat = view().filter(i => current==="todo"||i.cat===current);
-  const list = inCat.filter(i => matches(i,q) && (show==="todo" || (show==="hechas") === isDone(i)));
+  const term = current==="terminados";
+  const inCat = view().filter(i => term||current==="todo"||i.cat===current);
+  const list = inCat.filter(i => matches(i,q) && term === finished(i));
   $("#count").textContent = `${view().length} guardados · ${CATS.filter(c=>view().some(i=>i.cat===c.id)).length} categorías en uso`;
-  const nDone = inCat.filter(isDone).length, cName = current==="todo" ? "" : ` en ${catOf(current).name}`;
+  const nDone = inCat.filter(isDone).length, cName = current==="todo"||term ? "" : ` en ${catOf(current).name}`;
   $("#ptext").innerHTML = `<b>${nDone}</b> de ${inCat.length} cumplidas${esc(cName)}`;
   $("#pbar").style.width = inCat.length ? `${Math.round(nDone/inCat.length*100)}%` : "0";
   $("#grid").innerHTML = list.map(i=>{
@@ -469,8 +472,8 @@ function render(){
   if(!list.length){
     const c = catOf(current);
     empty.innerHTML = q ? `<b>Nada coincide con “${esc($("#q").value)}”</b>Probá con otra palabra o elegí “Todo”.`
-      : show==="hechas" && inCat.length ? `<b>Todavía no cumpliste nada acá</b>Tocá el círculo de una tarjeta cuando lo hagas, lo veas o vayas.`
-      : show==="pend" && inCat.length ? `<b>¡Cumpliste todo lo de acá!</b>Mandá más cosas en el chat cuando quieras.`
+      : term ? `<b>Todavía no terminaste nada</b>Tocá el círculo de una tarjeta cuando lo hagas, lo veas o vayas, y pasa acá.`
+      : inCat.length ? `<b>¡Cumpliste todo lo de acá!</b>Lo encontrás en Terminados. Mandá más cosas en el chat cuando quieras.`
       : `<b>Todavía no hay nada en ${esc(c?c.name:"esta categoría")}</b>Mandá un link o una captura en el chat y aparece acá.`;
   }
 }
@@ -543,7 +546,7 @@ async function save(id){
   db.collection("hechos").onSnapshot(snap => {
     const next = {};
     snap.docs.forEach(d => { if(d.exists && d.data().done) next[d.id] = d.data().at || true; });
-    DONE = next; render();
+    DONE = next; renderChips(); render();
   }, () => {});
   db.collection("sesiones").onSnapshot(snap => {
     const next = {};
@@ -632,12 +635,12 @@ async function toggleDone(id, el){
   if(!db) return;
   const ref = db.collection("hechos").doc(id), was = !!DONE[id], rect = el ? el.getBoundingClientRect() : null;
   try{
-    if(was){ await ref.delete(); toast("Lo volví a dejar pendiente."); }
+    if(was){ await ref.delete(); toast("Lo volví a dejar pendiente, de vuelta en su categoría."); }
     else{
       await ref.set({done:true, at:new Date().toISOString()});
       if(rect) confetti(rect);
       const n = Object.keys(DONE).length + (DONE[id]?0:1);
-      toast(`${CHEERS[Math.floor(Math.random()*CHEERS.length)]} Ya van ${n} cumplidas.`);
+      toast(`${CHEERS[Math.floor(Math.random()*CHEERS.length)]} Pasó a Terminados, ya van ${n}.`);
     }
   }catch(e){
     toast(e && e.code==="permission_denied" ? "Tu cuenta no tiene permiso para marcar cosas acá." : "No se pudo guardar. Probá de nuevo.");
@@ -645,7 +648,7 @@ async function toggleDone(id, el){
 }
 
 function setCat(id){
-  current = CATS.some(c=>c.id===id) ? id : "todo";
+  current = CATS.some(c=>c.id===id) || id===TERM.id ? id : "todo";
   renderChips(); render();
 }
 
@@ -658,12 +661,6 @@ $("#chips").addEventListener("click", e=>{
 $("#grid").addEventListener("click", e=>{
   const t = e.target.closest(".tick"); if(t){ const it = ITEMS.find(x=>x.id===t.dataset.tick); it && it.challenge ? toggleDay(it.id, ymd(new Date()), t) : toggleDone(t.dataset.tick, t); return; }
   const b = e.target.closest(".card"); if(b) open(b.dataset.id);
-});
-$("#seg").addEventListener("click", e=>{
-  const b = e.target.closest("button"); if(!b) return;
-  show = b.dataset.show;
-  $("#seg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b));
-  render();
 });
 $("#dlg").addEventListener("click", e=>{ if(e.target===$("#dlg")) $("#dlg").close() });
 $("#q").addEventListener("input", render);
