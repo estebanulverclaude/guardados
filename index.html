@@ -161,6 +161,13 @@ const CATS = [
 
 /* Ítems guardados. Los más nuevos arriba. */
 const ITEMS = [
+  {id:"claude-mem", cat:"trabajo", title:"claude-mem: memoria entre sesiones para Claude Code",
+   note:"«…a Claude entre sesiones.» Bencorde muestra claude-mem, un sistema de memoria persistente para Claude Code: guarda y comprime lo que pasa en cada sesión para que la siguiente arranque recordando lo anterior. Ese día era el repo #1 de GitHub trending. Se instala con «npx claude-mem install». Ojo: el observer propio tiene 30 días gratis y pide medio de pago; también se puede usar con tu plan de Anthropic o una key propia. (El reel es publicidad de Imperio por Black Friday.)",
+   img:"img/claude-mem.jpg", cover:"img/claude-mem-cover.jpg",
+   facts:{"Cuenta":"@bencorde","Repo":"github.com/thedotmack/claude-mem","Instalar":"npx claude-mem install","Licencia":"Apache 2.0"},
+   link:"https://github.com/thedotmack/claude-mem", linkLabel:"Ver repo",
+   link2:"https://www.instagram.com/p/DgGhajlMEGO/", link2Label:"Ver reel",
+   tags:["Claude","IA","Claude Code","memoria","GitHub","herramientas"], added:"2026-11-28"},
   {id:"conectores-claude", cat:"trabajo", title:"Los 5 conectores de Claude que más usa",
    note:"«Si usás Claude, estos son los cinco conectores que m…» (el texto se corta). ai._kid muestra integraciones para conectar Claude con otras apps. En la captura se ve una: Perplexity, para que Claude busque en todo internet y te arme un plan con fuentes (ejemplo: itinerario por Tokio con 13 fuentes). Los otros cuatro conectores no se ven en la captura: mirá el reel para completarlos.",
    img:"img/conectores-claude.jpg", cover:"img/conectores-claude-cover.jpg",
@@ -521,7 +528,7 @@ function open(id){
   $("#sheet").innerHTML = `${i.img?`<img src="${i.img}" alt="${esc(i.title)}">`:""}
     <div class="in"><span class="cat">${esc(c.name)}</span><h3>${esc(i.title)}</h3>${i.challenge?"":lightBadge(i)}<p>${esc(i.note)}</p>${facts}${steps(i)}${calendar(i)}
     <div class="tags">${(i.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>
-    <div class="actions">${i.link?`<a class="btn primary" href="${i.link}" target="_blank" rel="noopener">${esc(i.linkLabel||"Abrir link")}</a>`:""}
+    <div class="actions">${i.link?`<a class="btn primary" href="${i.link}" target="_blank" rel="noopener">${esc(i.linkLabel||"Abrir link")}</a>`:""}${i.link2?`<a class="btn" href="${i.link2}" target="_blank" rel="noopener">${esc(i.link2Label||"Otro link")}</a>`:""}
     ${db?(i.challenge?`<button class="btn" id="sheet-tick" aria-pressed="${chStats(i).today}">${chStats(i).today?"✓ Hoy cumplido · desmarcar":"Marcar hoy"}</button>`:`<button class="btn" id="sheet-tick" aria-pressed="${!!DONE[i.id]}">${DONE[i.id]?`✓ ${esc(doneLabel(i.cat))} · desmarcar`:`Marcar: ${esc(doneLabel(i.cat))}`}</button>`):""}
     <button class="btn" id="close">Cerrar</button></div>
     ${editor(i)}</div>`;
